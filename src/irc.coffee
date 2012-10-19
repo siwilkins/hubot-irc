@@ -7,11 +7,32 @@ Response = require('hubot').Response
 
 Irc     = require 'irc'
 
+Url    = require 'url'
+cradle = require 'cradle'
+
 class IrcBot extends Adapter
+
+  db: ->
+    if @db
+      @db
+    else
+      info = Url.parse process.env.HUBOT_COUCHDB_URL || "http://localhost:5984"
+      if info.auth
+        auth = info.auth.split(':')
+        client = new(cradle.Connection) info.hostname, info.port, auth:
+          username: auth[0]
+          password: auth[1]
+      else
+        client = new(cradle.Connection)(info.hostname, info.port)
+      @db = client.database(if info.pathname != '/' then info.pathname.slice(1) else "hubot-storage")
+
   send: (user, strings...) ->
     for str in strings
       if not str?
         continue
+      msg = new(TextMessage)(user, str)
+      db().save message, (err, res) ->
+        if err then console.error(err)
       if user.room
         console.log "#{user.room} #{str}"
         @bot.say(user.room, str)
