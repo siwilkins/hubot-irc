@@ -12,7 +12,7 @@ cradle = require 'cradle'
 
 class IrcBot extends Adapter
 
-  db: ->
+   db: ->
     if @db
       @db
     else
